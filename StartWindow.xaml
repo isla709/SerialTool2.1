@@ -1,0 +1,23 @@
+﻿<Window x:Class="SerialTool2._0.StartWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SerialTool2._0"
+        mc:Ignorable="d"
+        Title="StartWindow" Height="450" Width="800" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize" Loaded="Window_Loaded">
+    <Viewbox>
+        <Canvas Height="450" Width="800">
+            <Canvas.Background>
+                <ImageBrush x:Name="BG_IMG" ImageSource="/src/bg/background.png" Stretch="UniformToFill"/>
+            </Canvas.Background>
+            <Rectangle Height="110" Canvas.Left="675" Canvas.Top="340" Width="125" HorizontalAlignment="Center" VerticalAlignment="Top">
+                <Rectangle.Fill>
+                    <ImageBrush ImageSource="src/icon/Icon.png"/>
+                </Rectangle.Fill>
+            </Rectangle>
+            <TextBlock x:Name="StartTitle" TextWrapping="Wrap" Text="SerialToolV2.1" HorizontalAlignment="Left" Height="30" VerticalAlignment="Center" Width="800" Background="#99000000" Foreground="#FFB6B6B6" TextAlignment="Center" FontSize="22" FontWeight="Bold"/>
+
+        </Canvas>
+    </Viewbox>
+</Window>

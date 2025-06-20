@@ -33,7 +33,36 @@ namespace SerialTool2._0
         private void Page_Loaded(object sender, RoutedEventArgs e)//初始化
         {
             mw2 = Application.Current.Windows.Cast<Window>().FirstOrDefault(w => w is MainWindow) as MainWindow;
+
+            UIUpdate = new Task(new Action(async () =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        if (showRecvstring.Length > 10000)
+                        {
+                            showRecvstring.Clear();
+                        }
+                        string data = showRecvstring.ToString();
+                        Dispatcher.Invoke(() =>
+                        {
+                            tb_SerialRecv_TEXT_OUTPUT.Text = data;
+
+                        });
+                        await Task.Delay(200);
+                    }
+                    catch(Exception ex) 
+                    {
+                        ToolClass.WriteLog(ex.Message);
+                    }
+                    
+                }
+            }));
+            UIUpdate.Start();
+
             tb_SerialRecv_TEXT_OUTPUT_SHOWMSG("Ready:) :) :) :) \r\n", false); //欢迎
+
             recvSendIMGWindow.SetRecvSendIMGCHMode(RecvSendIMGWindow.RecvSendIMGCHMode.SerialMode);
 
             #region 初始化combobox
@@ -95,7 +124,7 @@ namespace SerialTool2._0
                         }
                         
                     }
-                    else//持续扫描
+                    else if(IsSerialCon == false)//持续扫描
                     {
                         try
                         {
@@ -132,6 +161,7 @@ namespace SerialTool2._0
         }
 
         bool IsSerialCon = false;
+        Task UIUpdate;
         private void btn_ConSerial_Click(object sender, RoutedEventArgs e)//连接串口
         {
             if (IsSerialCon == false)//连接
@@ -184,7 +214,7 @@ namespace SerialTool2._0
                     {
                         serialPort.Open();
                         serialPort.DataReceived += SerialPort_DataReceived;
-                        tb_SerialRecv_TEXT_OUTPUT_SHOWMSG("Serial Is Open! \r\n",true);
+                        tb_SerialRecv_TEXT_OUTPUT_SHOWMSG("Serial Is Open! \r\n", true);
                         btn_ConSerial.Content = "断开";
                         IsSerialCon = true;
                     }
@@ -208,8 +238,6 @@ namespace SerialTool2._0
                         serialPort.DataReceived -= SerialPort_DataReceived;
                         serialPort.PinChanged += SerialPort_PinChanged;
                         serialPort.Close();
-                        serialPort.Dispose();
-                        serialPort = null;
                         
                     }
                     catch(Exception ex) 
@@ -229,23 +257,23 @@ namespace SerialTool2._0
         }
 
         UInt64 RXCount = 0;
-
+        StringBuilder showRecvstring = new StringBuilder();
         public List<byte> imgData;
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)//数据接收事件
         {
             RXCount += (UInt64)serialPort.BytesToRead;
-            Dispatcher.Invoke(() => {
+            Dispatcher.BeginInvoke(new Action(() => {
                 tb_RX_Count.Text = RXCount.ToString();
-            });
+            }));
 
 
             if (recvSendIMGWindow.IsImgRecv == true)
             {
-                Dispatcher.Invoke(() =>
+                Dispatcher.BeginInvoke(new Action(() =>
                 {
                     recvSendIMGWindow.lb_recvSta.Content = "正在接收";
 
-                });
+                }));
                 byte[] imgrecvbytedata;
                 int recvcount = serialPort.BytesToRead;
                 imgrecvbytedata = new byte[recvcount];
@@ -271,32 +299,16 @@ namespace SerialTool2._0
 
                     string recvtmp = Encoding.UTF8.GetString(recvbyte);
 
-                    Dispatcher.Invoke(() =>
-                    {
-
-                        tb_SerialRecv_TEXT_OUTPUT_SHOWMSG(recvtmp, IsAddTimeEnable);
-                    });
-
+                    tb_SerialRecv_TEXT_OUTPUT_SHOWMSG(recvtmp, IsAddTimeEnable);
                 }
                 else
                 {
-                    string recvtmp = serialPort.ReadExisting();
-                    byte[] recvtmpbyte = Encoding.UTF8.GetBytes(recvtmp);
-                    string recvtmpbytestr = "";
-                    foreach (var item in recvtmpbyte)
-                    {
-                        recvtmpbytestr += item.ToString("X2") + " ";
-                    }
-                    Dispatcher.Invoke(() =>
-                    {
-                        tb_SerialRecv_TEXT_OUTPUT_SHOWMSG(recvtmpbytestr, IsAddTimeEnable);
-                    });
+                    byte recvtmp = Convert.ToByte(serialPort.ReadByte());
+                    string recvtmpbytestr = recvtmp.ToString("X2") + " ";
 
+                    tb_SerialRecv_TEXT_OUTPUT_SHOWMSG(recvtmpbytestr, IsAddTimeEnable);
                 }
-                Dispatcher.Invoke(() =>
-                {
-                    tb_SerialRecv_TEXT_OUTPUT.ScrollToEnd();
-                });
+                Dispatcher.BeginInvoke(new Action(() => { tb_SerialRecv_TEXT_OUTPUT.ScrollToEnd(); }));
             }
         }
 
@@ -359,11 +371,11 @@ namespace SerialTool2._0
         {
             if (isShowTime == false)
             {
-                tb_SerialRecv_TEXT_OUTPUT.Text += str;
+                showRecvstring.Append(str);
             }
             else
             {
-                tb_SerialRecv_TEXT_OUTPUT.Text +="[" + DateTime.Now + "] " +  str;
+                showRecvstring.Append("[" + DateTime.Now + "] " + str);
             }
         }
 
@@ -495,7 +507,7 @@ namespace SerialTool2._0
 
         private void btn_clsRecvData_Click(object sender, RoutedEventArgs e)
         {
-            tb_SerialRecv_TEXT_OUTPUT.Text = "";
+            showRecvstring.Clear();
         }//清除接收区
 
         bool isKeepSendEnable = false;
